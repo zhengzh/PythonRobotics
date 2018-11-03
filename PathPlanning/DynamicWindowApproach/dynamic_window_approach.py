@@ -168,16 +168,31 @@ def main():
     # initial state [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
     x = np.array([0.0, 0.0, math.pi / 8.0, 0.0, 0.0])
     # goal position [x(m), y(m)]
-    goal = np.array([10, 10])
+    goal_ = np.array([10.0, 10.0])
     # obstacles [x(m) y(m), ....]
     ob = np.matrix([[-1, -1],
                     [0, 2],
+                    [1, 2],
+                    [2, 2],
+                    [3, 2],
+                    [4, 2],
+                    [5, 2],
+                    [5, 1],
+                    [5, 0],
+                    [4, 0],
+                    [3, 0],
+                    [2, 0],
+                    [-1.5, 0],
+                    [1.5, 0],
+                    [0, 1.5],
+                    [0, -1.5],
                     [4.0, 2.0],
                     [5.0, 4.0],
                     [5.0, 5.0],
                     [5.0, 6.0],
                     [5.0, 9.0],
                     [8.0, 9.0],
+                    [10.0,10.0],
                     [7.0, 9.0],
                     [12.0, 12.0]
                     ])
@@ -186,7 +201,8 @@ def main():
     config = Config()
     traj = np.array(x)
 
-    for i in range(1000):
+    for i in range(100000):
+        goal=goal_+np.random.random(2)
         u, ltraj = dwa_control(x, u, config, goal, ob)
 
         x = motion(x, u, config.dt)
