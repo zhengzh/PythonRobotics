@@ -16,7 +16,7 @@ import cubic_spline_planner
 
 NX = 4  # x = x, y, v, yaw
 NU = 2  # a = [accel, steer]
-T = 5  # horizon length
+T = 1  # horizon length
 
 # mpc parameters
 R = np.diag([0.01, 0.01])  # input cost matrix

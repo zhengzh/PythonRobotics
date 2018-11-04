@@ -182,8 +182,8 @@ def closed_loop_prediction(cx, cy, cyaw, ck, speed_profile, goal):
         ai = PIDControl(speed_profile[target_ind], state.v)
         state = update(state, ai, dl)
 
-        if abs(state.v) <= stop_speed:
-            target_ind += 1
+        # if abs(state.v) <= stop_speed:
+        #     target_ind += 1
 
         time = time + dt
 
@@ -253,7 +253,7 @@ def main():
     cx, cy, cyaw, ck, s = cubic_spline_planner.calc_spline_course(
         ax, ay, ds=0.1)
     target_speed = 10.0 / 3.6  # simulation parameter km/h -> m/s
-
+    # import ipdb; ipdb.set_trace()
     sp = calc_speed_profile(cx, cy, cyaw, target_speed)
 
     t, x, y, yaw, v = closed_loop_prediction(cx, cy, cyaw, ck, sp, goal)

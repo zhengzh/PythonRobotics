@@ -177,7 +177,7 @@ def sample_states(angle_samples, a_min, a_max, d, p_max, p_min, nh):
 
 def uniform_terminal_state_sampling_test1():
     k0 = 0.0
-    nxy = 5
+    nxy = 10
     nh = 3
     d = 20
     a_min = - np.deg2rad(45.0)
@@ -311,10 +311,10 @@ def lane_state_sampling_test1():
 
 def main():
     uniform_terminal_state_sampling_test1()
-    uniform_terminal_state_sampling_test2()
-    biased_terminal_state_sampling_test1()
-    biased_terminal_state_sampling_test2()
-    lane_state_sampling_test1()
+    # uniform_terminal_state_sampling_test2()
+    # biased_terminal_state_sampling_test1()
+    # biased_terminal_state_sampling_test2()
+    # lane_state_sampling_test1()
 
 
 if __name__ == '__main__':

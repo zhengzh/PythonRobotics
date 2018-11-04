@@ -39,6 +39,89 @@ def calc_fianl_path(ngoal, closedset, reso):
 
     return rx, ry
 
+def a_star_planning_multiple_goals(sx, sy, gxs, gys, ox, oy, reso, rr):
+    # find a path to multiple candidate goals
+    # return the nearest path
+    # return the lowest cost path
+    nstart = Node(round(sx / reso), round(sy / reso), 0.0, -1)
+    ngoals = [Node(round(gx / reso), round(gy / reso), 0.0, -1) for gx, gy in zip(gxs, gys)]
+    ox = [iox / reso for iox in ox]
+    oy = [ioy / reso for ioy in oy]
+
+    obmap, minx, miny, maxx, maxy, xw, yw = calc_obstacle_map(ox, oy, reso, rr)
+
+    motion = get_motion_model()
+    closest_goal = None
+
+    openset, closedset = dict(), dict()
+    openset[calc_index(nstart, xw, minx, miny)] = nstart
+
+    finded = False
+    while not finded:
+        c_id = min(
+            openset, key=lambda o: openset[o].cost + calc_heuristic2(ngoals, openset[o]))
+            # openset, key=lambda o: openset[o].cost + calc_heuristic(ngoal, openset[o]))
+        current = openset[c_id]
+
+        # show graph
+        if show_animation:
+            plt.plot(current.x * reso, current.y * reso, "xc")
+            if len(closedset.keys()) % 10 == 0:
+                plt.pause(0.001)
+
+        for ngoal in ngoals:
+            if current.x == ngoal.x and current.y == ngoal.y:
+                print("Find goal")
+                ngoal.pind = current.pind
+                ngoal.cost = current.cost
+                closest_goal = ngoal
+                finded = True
+                break
+
+        # Remove the item from the open set
+        del openset[c_id]
+        # Add it to the closed set
+        closedset[c_id] = current
+
+        # expand search grid based on motion model
+        for i in range(len(motion)):
+            node = Node(current.x + motion[i][0],
+                        current.y + motion[i][1],
+                        # current.cost + motion[i][2], c_id)
+                        current.cost + motion[i][2]+800*dist(current, obmap, minx, miny, maxx, maxy), c_id)
+            print(800*dist(current, obmap, minx, miny, maxx, maxy))
+                        
+            n_id = calc_index(node, xw, minx, miny)
+
+            if n_id in closedset:
+                continue
+
+            if not verify_node(node, obmap, minx, miny, maxx, maxy):
+                continue
+
+            if n_id not in openset:
+                openset[n_id] = node  # Discover a new node
+
+            tcost = current.cost + calc_heuristic(current, node)
+
+            if tcost >= node.cost:
+                continue  # this is not a better path
+
+            node.cost = tcost
+            openset[n_id] = node  # This path is the best unitl now. record it!
+
+    rx, ry = calc_fianl_path(closest_goal, closedset, reso)
+
+    return rx, ry
+
+def dist(cur, obmap, minx, miny, maxx, maxy):
+    min_dis = 999999
+    for x in range(minx, maxx):
+        for y in range(miny,maxy):
+            if obmap[x][y]:
+                dis=math.sqrt((cur.x-x)**2+(cur.y-y)**2)
+                min_dist = min(min_dis, dis) 
+    return 1.0/min_dist
 
 def a_star_planning(sx, sy, gx, gy, ox, oy, reso, rr):
     """
@@ -64,7 +147,8 @@ def a_star_planning(sx, sy, gx, gy, ox, oy, reso, rr):
 
     while 1:
         c_id = min(
-            openset, key=lambda o: openset[o].cost + calc_heuristic(ngoal, openset[o]))
+            openset, key=lambda o: openset[o].cost + calc_heuristic2([ngoal], openset[o]))
+            # openset, key=lambda o: openset[o].cost + calc_heuristic(ngoal, openset[o]))
         current = openset[c_id]
 
         # show graph
@@ -88,7 +172,7 @@ def a_star_planning(sx, sy, gx, gy, ox, oy, reso, rr):
         for i in range(len(motion)):
             node = Node(current.x + motion[i][0],
                         current.y + motion[i][1],
-                        current.cost + motion[i][2], c_id)
+                        current.cost + motion[i][2]+8*dist(current, obmap, minx, miny, maxx, maxy), c_id)
             n_id = calc_index(node, xw, minx, miny)
 
             if n_id in closedset:
@@ -108,6 +192,9 @@ def a_star_planning(sx, sy, gx, gy, ox, oy, reso, rr):
 
     return rx, ry
 
+
+def calc_heuristic2(nodes, n):
+    return min([calc_heuristic(n1, n) for n1 in nodes])
 
 def calc_heuristic(n1, n2):
     w = 1.0  # weight of heuristic
@@ -190,6 +277,8 @@ def main():
     sy = 10.0  # [m]
     gx = 50.0  # [m]
     gy = 50.0  # [m]
+    gxs = [50.0, 24.0]
+    gys = [50.0, 40.0]
     grid_size = 1.0  # [m]
     robot_size = 1.0  # [m]
 
@@ -217,11 +306,12 @@ def main():
     if show_animation:
         plt.plot(ox, oy, ".k")
         plt.plot(sx, sy, "xr")
-        plt.plot(gx, gy, "xb")
+        for gx, gy in zip(gxs, gys):
+            plt.plot(gx, gy, "xb")
         plt.grid(True)
         plt.axis("equal")
 
-    rx, ry = a_star_planning(sx, sy, gx, gy, ox, oy, grid_size, robot_size)
+    rx, ry = a_star_planning_multiple_goals(sx, sy, gxs, gys, ox, oy, grid_size, robot_size)
 
     if show_animation:
         plt.plot(rx, ry, "-r")
