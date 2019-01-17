@@ -26,7 +26,7 @@ def update(state, v, delta, dt, L):
     state.v = v
     state.x = state.x + state.v * math.cos(state.yaw) * dt
     state.y = state.y + state.v * math.sin(state.yaw) * dt
-    state.yaw = state.yaw + state.v / L * math.tan(delta) * dt
+    state.yaw = state.yaw + state.v / L * math.tan(delta) * dt # car model
     state.yaw = pi_2_pi(state.yaw)
 
     return state

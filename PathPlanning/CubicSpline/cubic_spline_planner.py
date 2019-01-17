@@ -212,7 +212,7 @@ def main():
         rk.append(sp.calc_curvature(i_s))
 
     sp2 = Spline2D(x2, y2)
-    rx2, ry2, ryaw, rk = [], [], [], []
+    rx2, ry2, ryaw2, rk2 = [], [], [], []
     for i_s in s:
         ix, iy = sp2.calc_position(i_s)
         rx2.append(ix)
@@ -228,6 +228,9 @@ def main():
     plt.xlabel("x[m]")
     plt.ylabel("y[m]")
     plt.legend()
+
+    plt.subplots(1)
+    plt.plot(x, y)
 
     flg, ax = plt.subplots(1)
     plt.plot(s, [np.rad2deg(iyaw) for iyaw in ryaw], "-r", label="yaw")

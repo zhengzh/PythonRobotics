@@ -8,6 +8,7 @@ Path Planning Sample Code with Randamized Rapidly-Exploring Random Trees (RRT)
 import matplotlib.pyplot as plt
 import random
 import math
+import numpy as np
 import copy
 
 show_animation = True

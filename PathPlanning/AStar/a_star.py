@@ -59,7 +59,7 @@ def a_star_planning_multiple_goals(sx, sy, gxs, gys, ox, oy, reso, rr):
     finded = False
     while not finded:
         c_id = min(
-            openset, key=lambda o: openset[o].cost + calc_heuristic2(ngoals, openset[o]))
+            openset, key=lambda o: openset[o].cost + 0*calc_heuristic2(ngoals, openset[o]))
             # openset, key=lambda o: openset[o].cost + calc_heuristic(ngoal, openset[o]))
         current = openset[c_id]
 
@@ -88,8 +88,8 @@ def a_star_planning_multiple_goals(sx, sy, gxs, gys, ox, oy, reso, rr):
             node = Node(current.x + motion[i][0],
                         current.y + motion[i][1],
                         # current.cost + motion[i][2], c_id)
-                        current.cost + motion[i][2]+800*dist(current, obmap, minx, miny, maxx, maxy), c_id)
-            print(800*dist(current, obmap, minx, miny, maxx, maxy))
+                        current.cost + motion[i][2]+80*dist(current, obmap, minx, miny, maxx, maxy), c_id)
+            # print(800*dist(current, obmap, minx, miny, maxx, maxy))
                         
             n_id = calc_index(node, xw, minx, miny)
 
@@ -104,10 +104,11 @@ def a_star_planning_multiple_goals(sx, sy, gxs, gys, ox, oy, reso, rr):
 
             tcost = current.cost + calc_heuristic(current, node)
 
-            if tcost >= node.cost:
+            if node.cost >= openset[n_id].cost:
                 continue  # this is not a better path
 
-            node.cost = tcost
+            # print(tcost)
+            # node.cost = tcost
             openset[n_id] = node  # This path is the best unitl now. record it!
 
     rx, ry = calc_fianl_path(closest_goal, closedset, reso)
@@ -313,6 +314,8 @@ def main():
 
     rx, ry = a_star_planning_multiple_goals(sx, sy, gxs, gys, ox, oy, grid_size, robot_size)
 
+    print(rx)
+    print(ry)
     if show_animation:
         plt.plot(rx, ry, "-r")
         plt.show()
