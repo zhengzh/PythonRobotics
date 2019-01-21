@@ -53,9 +53,9 @@ def pure_pursuit(state, cx, cy, prev_idx):
     if state.v < 0:
         alpha = math.pi - alpha
     
-    lf = lf_dist + k * state.v
+    # lf = lf_dist + k * state.v
 
-    delta = math.atan2(2*L*math.sin(alpha), lf)
+    delta = math.atan2(2*L*math.sin(alpha), math.sqrt((ty-state.y)**2+(tx-state.x)**2))
     return delta, target_idx 
 
 def calc_target_index(state, cx, cy):
