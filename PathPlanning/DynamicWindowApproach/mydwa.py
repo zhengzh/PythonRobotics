@@ -12,30 +12,40 @@ import numpy as np
 # prediction trajector
 # cost = goal heading, distance and clearance to goal
 
-# 
+############################
+# it is stupid to sampling
+# in action spaces
+############################
+
+# why python so slow
+# robot will rotate or swing when can't move
 
 # print
+
+show_animation = False
 
 class Config:
     def __init__(self):
         self.max_speed = 2.0
-        self.min_speed = 0.1
+        self.min_speed = 0.0
         self.max_yaw_speed = 1
         self.min_yaw_speed = -1
         self.acc = 2
         self.dt = 0.1
         self.acc_yaw = 1
         self.prediction_time = 3
-        self.v_res = 0.02
-        self.yaw_res = 0.01
+        self.v_res = 0.05
+        self.yaw_res = 0.04
 
 def move(x, u, dt):
+
     x=x[:]
     x[0]+=u[0]*dt*cos(x[2])
     x[1]+=u[0]*dt*sin(x[2])
     x[2]+=u[1]*dt
     x[3]=u[0]
     x[4]=u[1]
+
     return x
 
 def distance(x1, y1, x2, y2):
@@ -86,7 +96,7 @@ def dwa(x, goal, map, config):
     best = []
     for v in np.arange(vmin, vmax, config.v_res):
         for y in np.arange(ymin, ymax, config.yaw_res):
-            traj = cal_trajectory(x, [v, y], config.dt, config.prediction_time)
+            traj = cal_trajectory(x, [v, y], 2*config.dt, config.prediction_time)
             if cost_to_obstacle(traj, map):
                 c = cost_to_goal(traj, goal)
                 if lowest > c:
@@ -96,14 +106,56 @@ def dwa(x, goal, map, config):
     return lowest, best
 
 
+def plot_arrow(x, y, yaw, length=1., width=0.2):
+    plt.arrow(x, y, length*cos(yaw), length*sin(yaw), head_length=width, head_width=width)
+    plt.plot(x, y, 'x')
+
 if __name__ == '__main__':
     xinit = [0, 0, 0, 0, 0]
     goal = [10, 10]
     obstacles = []
     config = Config()
 
+    fig, ax = plt.subplots(1,1)
+    ob = [[-1, -1],
+                    [0, 2],
+                    [1, 2],
+                    [2, 2],
+                    [3, 2],
+                    [4, 2],
+                    [5, 2],
+                    [5, 1],
+                    [5, 0],
+                    [4, 0],
+                    [3, 0],
+                    [2, 0],
+                    [-1.5, 0],
+                    [1.5, 0],
+                    [0, 1.5],
+                    [0, -1.5],
+                    [4.0, 2.0],
+                    [5.0, 4.0],
+                    [5.0, 5.0],
+                    [5.0, 6.0],
+                    [5.0, 9.0],
+                    [8.0, 9.0],
+                    [10.0,10.0],
+                    [7.0, 9.0],
+                    [12.0, 12.0]
+                    ]
+    
+
     for step in range(500):
-        c, u = dwa(xinit, goal, obstacles, config)
-        print c, xinit
-        xinit = move(xinit, u, config.dt)
+        if show_animation:
+            plt.cla()
+            plot_arrow(xinit[0], xinit[1], xinit[2])
+            plt.plot(goal[0], goal[1], 'x')
+            plt.plot([o[0] for o in ob], [o[1] for o in ob], 'o')
+            plt.axis('equal')
+            plt.pause(0.001)
+        c, u = dwa(xinit, goal, ob, config)
+        if u:
+            xinit = move(xinit, u, config.dt)
+        else:
+            print("Can't Move")
     

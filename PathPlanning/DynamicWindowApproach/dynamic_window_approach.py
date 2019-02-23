@@ -215,7 +215,7 @@ def main():
             plt.plot(goal[0], goal[1], "xb")
             plt.plot(ob[:, 0], ob[:, 1], "ok")
             plot_arrow(x[0], x[1], x[2])
-            plt.axis("equal")
+            plt.axis("square")
             plt.grid(True)
             plt.pause(0.0001)
 
