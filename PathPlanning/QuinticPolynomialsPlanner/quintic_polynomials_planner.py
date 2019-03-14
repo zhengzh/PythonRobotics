@@ -20,6 +20,7 @@ MIN_T = 5.0  # minimum time to the goal[s]
 
 show_animation = True
 
+max_curv = 1
 
 class quinic_polynomial:
 
@@ -113,7 +114,7 @@ def quinic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_a
         xqp = quinic_polynomial(sx, vxs, axs, gx, vxg, axg, T)
         yqp = quinic_polynomial(sy, vys, ays, gy, vyg, ayg, T)
 
-        time, rx, ry, ryaw, rv, ra, rj = [], [], [], [], [], [], []
+        time, rx, ry, ryaw, rv, ra, rj, curvs= [], [], [], [], [], [], [], []
 
         for t in np.arange(0.0, T + dt, dt):
             time.append(t)
@@ -122,6 +123,7 @@ def quinic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_a
 
             vx = xqp.calc_first_derivative(t)
             vy = yqp.calc_first_derivative(t)
+
             v = np.hypot(vx, vy)
             yaw = math.atan2(vy, vx)
             rv.append(v)
@@ -129,6 +131,10 @@ def quinic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_a
 
             ax = xqp.calc_second_derivative(t)
             ay = yqp.calc_second_derivative(t)
+
+            curvature = (vx*ay-vy*ax)/math.sqrt((vx*vx+vy*vy)**3)
+
+            curvs.append(curvature)
             a = np.hypot(ax, ay)
             if len(rv) >= 2 and rv[-1] - rv[-2] < 0.0:
                 a *= -1
@@ -141,12 +147,17 @@ def quinic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_a
                 j *= -1
             rj.append(j)
 
-        if max([abs(i) for i in ra]) <= max_accel and max([abs(i) for i in rj]) <= max_jerk:
+        if max([abs(i) for i in ra]) <= max_accel and max([abs(i) for i in rj]) <= max_jerk and max([abs(i) for i in curvs])<=max_curv:
             print("find path!!")
             break
 
+<<<<<<< Updated upstream
     if show_animation:
         for i in range(len(rx)):
+=======
+    if False:  # pragma: no cover
+        for i, _ in enumerate(rx):
+>>>>>>> Stashed changes
             plt.cla()
             plt.grid(True)
             plt.axis("equal")
@@ -160,7 +171,7 @@ def quinic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_a
                       )
             plt.pause(0.001)
 
-    return time, rx, ry, ryaw, rv, ra, rj
+    return time, rx, ry, ryaw, rv, ra, rj, curvs
 
 
 def plot_arrow(x, y, yaw, length=1.0, width=0.5, fc="r", ec="k"):
@@ -183,18 +194,18 @@ def main():
     sx = 10.0  # start x position [m]
     sy = 10.0  # start y position [m]
     syaw = np.deg2rad(10.0)  # start yaw angle [rad]
-    sv = 1.0  # start speed [m/s]
-    sa = 0.1  # start accel [m/ss]
+    sv = 0.1  # start speed [m/s]
+    sa = 0.0  # start accel [m/ss]
     gx = 30.0  # goal x position [m]
     gy = -10.0  # goal y position [m]
     gyaw = np.deg2rad(20.0)  # goal yaw angle [rad]
-    gv = 1.0  # goal speed [m/s]
-    ga = 0.1  # goal accel [m/ss]
+    gv = 1.  # goal speed [m/s]
+    ga = 0.0  # goal accel [m/ss]
     max_accel = 1.0  # max accel [m/ss]
     max_jerk = 0.5  # max jerk [m/sss]
     dt = 0.1  # time tick [s]
 
-    time, x, y, yaw, v, a, j = quinic_polynomials_planner(
+    time, x, y, yaw, v, a, j, curvs = quinic_polynomials_planner(
         sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
 
     if show_animation:
@@ -216,6 +227,12 @@ def main():
         plt.plot(time, a, "-r")
         plt.xlabel("Time[s]")
         plt.ylabel("accel[m/ss]")
+        plt.grid(True)
+
+        plt.subplots()
+        plt.plot(time, curvs, "-r")
+        plt.xlabel("Time[s]")
+        plt.ylabel("curvs[deg/mt]")
         plt.grid(True)
 
         plt.subplots()

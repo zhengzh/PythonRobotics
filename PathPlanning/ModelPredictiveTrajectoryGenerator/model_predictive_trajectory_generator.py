@@ -141,6 +141,7 @@ def test_optimize_trajectory():
 
     x, y, yaw, p = optimize_trajectory(target, k0, init_p)
 
+<<<<<<< Updated upstream
     show_trajectory(target, x, y)
     #  plt.plot(x, y, "-r")
     plot_arrow(target.x, target.y, target.yaw)
@@ -165,6 +166,15 @@ def test_trajectory_generate():
     plt.axis("equal")
     plt.grid(True)
     plt.show()
+=======
+    print(x,y,yaw, p)
+    if show_animation:
+        show_trajectory(target, x, y)
+        plot_arrow(target.x, target.y, target.yaw)
+        plt.axis("equal")
+        plt.grid(True)
+        plt.show()
+>>>>>>> Stashed changes
 
 
 def main():
