@@ -1,13 +1,74 @@
+from math import sqrt, atan2, pi
+import bisect
 
-def cartesian_to_frenet(x, y, theta, mapx, mapy):
-    pass
+
+def proj(x, y, u, v):
+    n = (x*u+y*v)/(u*u+v*v)
+    return (n*u, n*v)
+
+def norm(x, y):
+    return sqrt(x*x+y*y)
+
+def normal(x, y):
+    n = norm(x, y)
+    return [x/n, y/n]
+
+def add(x1, y1, x2, y2):
+    return [x1+x2, y1+y2]
+
+def get_maps(maps_x, maps_y):
+    maps = zip(maps_x, maps_y)
+    s = 0
+    maps_s = [0]
+    for i in range(len(maps)-1):
+        d = distance(maps[i][0], maps[i][1], maps[i+1[0], maps[i+1][1])
+        s += d
+        maps_s.append(s)
+
+    return maps_s
+
+def cartesian_to_frenet(x, y, theta, maps_x, maps_y, maps_s):
+
+    next_point = get_next_waypoint(x, y, theta, maps_x, maps_y)
+    if next_point == 0:
+        print "error"
+
+    prev_point = next_point-1
+    
+    nx = maps_x[next_point]
+    ny = maps_y[next_point]
+    px = maps_x[prev_point]
+    py = maps_y[prev_point]
+    
+    proj_x, proj_y = proj(x-px, y-py, nx-px, ny-py)
+
+    d = [x-proj_x, y-proj_y]
+
+    s = maps_s[prev_point]+norm(proj_x, proj_y)
+
+    return s, d
     
 
-def frenet_to_cartesian(s, d, mapx, mapy, ):
-    pass
+
+def frenet_to_cartesian(s, d, maps_x, maps_y, maps_s):
+
+    next_point = bisect.bisect(self.s, maps_s) - 1
+    prev_point = next_point - 1
+
+    nx = maps_x[next_point]
+    ny = maps_y[next_point]
+    px = maps_x[prev_point]
+    py = maps_y[prev_point]
+
+    n = normal(nx-px, ny-py)
+    
+    ds = s - map_s[prev_point]
+
+    tan = ds*n
+
+    return [tan[0]+d[0], tan[1]+d[1]]
 
 
-from math import sqrt, atan2, pi
 def distance(x1, y1, x2, y2):
     return sqrt((x2-x1)**2+(y2-y1)**2)
 
@@ -36,6 +97,19 @@ def get_next_waypoint(x, y, theta, maps_x, maps_y):
         closest_waypoint+=1
     
     return closest_waypoint
+
+
+
+# TODO draw pa
+def draw_road(maps_x, maps_y, maps_s):
+    import matplotlib.pyplot as plt
+    plt.plot(maps_x, maps_y)
+
+    max_s = maps_s[-1]
+
+    for d in [-1, 0, 1]
+        for ds in range(maps_s):
+
 
 
 # graph get nearest waypoint

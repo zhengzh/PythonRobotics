@@ -22,7 +22,7 @@ import numpy as np
 
 # print
 
-show_animation = False
+show_animation = True
 
 class Config:
     def __init__(self):
@@ -80,6 +80,28 @@ def cal_trajectory(x, u, dt, tt):
     return traj
 
 
+def plot_trajectory(x, config):
+    # window
+    # calculate trajectory, compute cost, return min cost
+    # return best action
+
+    dt = config.dt
+
+    vmax = min(x[3]+config.acc*dt, config.max_speed)
+    vmin = max(config.min_speed, x[3]-config.acc*dt)
+    ymax = min(x[4]+config.acc_yaw*dt, config.max_yaw_speed)
+    ymin = max(x[4]-config.acc_yaw*dt, config.min_yaw_speed)
+
+    lowest = 99999
+    best = []
+    for v in np.arange(vmin, vmax, config.v_res):
+        for y in np.arange(ymin, ymax, config.yaw_res):
+            traj = cal_trajectory(x, [v, y], config.dt, config.prediction_time)
+            plt.plot([i[0] for i in traj], [i[1] for i in traj])
+    plt.show()
+    
+    return lowest, best
+
 def dwa(x, goal, map, config):
     # window
     # calculate trajectory, compute cost, return min cost
@@ -96,7 +118,7 @@ def dwa(x, goal, map, config):
     best = []
     for v in np.arange(vmin, vmax, config.v_res):
         for y in np.arange(ymin, ymax, config.yaw_res):
-            traj = cal_trajectory(x, [v, y], 2*config.dt, config.prediction_time)
+            traj = cal_trajectory(x, [v, y], config.dt, config.prediction_time)
             if cost_to_obstacle(traj, map):
                 c = cost_to_goal(traj, goal)
                 if lowest > c:
@@ -111,6 +133,11 @@ def plot_arrow(x, y, yaw, length=1., width=0.2):
     plt.plot(x, y, 'x')
 
 if __name__ == '__main__':
+    xinit = [0, 0, 0, 0, 0]
+    config = Config()
+    plot_trajectory(xinit, config)
+
+if __name__ != '__main__':
     xinit = [0, 0, 0, 0, 0]
     goal = [10, 10]
     obstacles = []
