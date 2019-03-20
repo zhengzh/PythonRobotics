@@ -6,6 +6,8 @@ WB = 3. # rear to front wheel
 W = 2. # width of car
 LF = 3.3 # distance from rear to vehicle front end
 LB = 1.0 # distance from rear to vehicle back end
+MAX_STEER = 0.6 #[rad] maximum steering angle 
+
 #WBUBBLE_DIST = 1.5
 #WBUBBLE_R = sqrt(1.5*1.5+1)
 
