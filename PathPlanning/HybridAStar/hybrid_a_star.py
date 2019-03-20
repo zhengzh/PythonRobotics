@@ -15,6 +15,7 @@ import scipy.spatial
 import matplotlib.pyplot as plt
 import reeds_shepp_path_planning as rs
 import heapq
+from car import move
 
 EXTEND_AREA = 5.0  # [m]
 H_COST = 1.0
@@ -26,15 +27,15 @@ show_animation = True
 
 class Node:
 
-    def __init__(self, xind, yind, yawind, direction, x, y, yaw, steer=None, pind=None):
-        # store kd-tree
+    def __init__(self, xind, yind, yawind, direction, xlist, ylist, yawlist, directions, steer=None, pind=None):
         self.xind = xind
         self.yind = yind
         self.yawind = yawind
         self.direction = direction
-        self.x = x
-        self.y = y
-        self.yaw = yaw
+        self.xlist = xlist
+        self.ylist = ylist
+        self.yawlist = yawlist
+        self.directions = directions
         self.steer = steer
         self.pind = pind
 
@@ -104,14 +105,6 @@ class Config:
         self.L = L
 
 
-def move(x, y, yaw, L, distance, steer):
-    x += distance * math.cos(yaw)
-    y += distance * math.sin(yaw)
-    yaw += distance * math.tan(steer) / L # distance/2
-
-    return x, y, yaw
-
-
 def show_expansion_tree():
     pass
 
@@ -123,7 +116,7 @@ def expand(current, distance, steer_min, steer_max, n_samples, config, ox, oy, k
     neighbors = []
     for direction in [1, -1]
         for steer in np.linspace(steer_min, steer_max, n_samples):
-            nx, ny, nyaw = move(x, y, yaw, config.L, distance*direction, steer)
+            nx, ny, nyaw = move(x, y, yaw, distance*direction, steer)
             neighbors.append()
     
     pass

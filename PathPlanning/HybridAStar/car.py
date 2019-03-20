@@ -1,6 +1,6 @@
 
 import matplotlib.pyplot as plt
-from math import sqrt, cos, sin
+from math import sqrt, cos, sin, tan, pi
 
 WB = 3. # rear to front wheel
 W = 2. # width of car
@@ -62,10 +62,13 @@ def plot_car(x, y, yaw):
     
     plt.plot(car_outline_x, car_outline_y, car_color)
 
+def pi_2_pi(angle):
+    return (angle + pi) % (2 * pi) - pi
+
 def move(x, y, yaw, distance, steer, L=WB):
-    x += distance * math.cos(yaw)
-    y += distance * math.sin(yaw)
-    yaw += distance * math.tan(steer) / L # distance/2
+    x += distance * cos(yaw)
+    y += distance * sin(yaw)
+    yaw += pi_2_pi(distance * tan(steer) / L) # distance/2
 
     return x, y, yaw
 
