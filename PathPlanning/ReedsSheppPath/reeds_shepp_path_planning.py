@@ -401,7 +401,7 @@ def test():
 
         if show_animation:
             plt.cla()
-            plt.plot(px, py, label="final course " + str(mode))
+            plt.plot(px, py, label="final course " + str(mode), alpha=0.3)
 
             #  plotting
             plot_arrow(start_x, start_y, start_yaw)

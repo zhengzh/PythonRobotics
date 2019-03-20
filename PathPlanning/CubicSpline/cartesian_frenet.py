@@ -2,6 +2,9 @@ from math import sqrt, atan2, pi
 import bisect
 
 
+def distance(x1, y1, x2, y2):
+    return sqrt((x2-x1)**2+(y2-y1)**2)
+
 def proj(x, y, u, v):
     n = (x*u+y*v)/(u*u+v*v)
     return (n*u, n*v)
@@ -21,7 +24,7 @@ def get_maps(maps_x, maps_y):
     s = 0
     maps_s = [0]
     for i in range(len(maps)-1):
-        d = distance(maps[i][0], maps[i][1], maps[i+1[0], maps[i+1][1])
+        d = distance(maps[i][0], maps[i][1], maps[i+1][0], maps[i+1][1])
         s += d
         maps_s.append(s)
 
@@ -69,9 +72,6 @@ def frenet_to_cartesian(s, d, maps_x, maps_y, maps_s):
     return [tan[0]+d[0], tan[1]+d[1]]
 
 
-def distance(x1, y1, x2, y2):
-    return sqrt((x2-x1)**2+(y2-y1)**2)
-
 def get_closest_waypoint(x, y, maps_x, maps_y):
     closest = 999999
     closest_waypoint = 0
@@ -100,16 +100,45 @@ def get_next_waypoint(x, y, theta, maps_x, maps_y):
 
 
 
-# TODO draw pa
+# draw parallel lines
 def draw_road(maps_x, maps_y, maps_s):
-    import matplotlib.pyplot as plt
-    plt.plot(maps_x, maps_y)
-
     max_s = maps_s[-1]
+    d = 1
+    parallel_line = []
+    for i in range(1, len(maps_s)):
+        next_point, prev_point = i, i-1
+        nx = maps_x[next_point]
+        ny = maps_y[next_point]
+        px = maps_x[prev_point]
+        py = maps_y[prev_point]
 
-    for d in [-1, 0, 1]
-        for ds in range(maps_s):
+        perpend = normal(py-ny, nx-px) # [-y, x]
+        parallel_line.append([perpend[0]+px, perpend[1]+py])
+        parallel_line.append([perpend[0]+nx, perpend[1]+ny])
 
+    return parallel_line
+
+if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+    import csv
+
+    maps_x, maps_y = [], []
+    with open("highway_map.csv", 'r') as f:
+        reader = csv.reader(f, delimiter=' ')
+        for r in reader:
+            maps_x.append(float(r[0]))
+            maps_y.append(float(r[1]))
+
+    maps_x = [0, 1, 2]
+    maps_y = [0, 1, 5]
+    maps_s = get_maps(maps_x, maps_y)
+    pa = draw_road(maps_x, maps_y, maps_s)
+    plt.plot(maps_x, maps_y, 'r')
+    pa_x, pa_y = zip(*pa)
+    plt.plot(pa_x, pa_y, 'b')
+    plt.axis('square')
+    plt.show()
+    
 
 
 # graph get nearest waypoint
