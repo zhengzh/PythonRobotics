@@ -8,17 +8,26 @@ LF = 3.3 # distance from rear to vehicle front end
 LB = 1.0 # distance from rear to vehicle back end
 MAX_STEER = 0.6 #[rad] maximum steering angle 
 
-#WBUBBLE_DIST = 1.5
-#WBUBBLE_R = sqrt(1.5*1.5+1)
+WBUBBLE_DIST = (LF-LB)/2.0
+WBUBBLE_R = sqrt(((LF+LB)/2.0)**2+1)
 
 # vehicle rectangle verticles
 VRX = [LF, LF, -LB, -LB, LF]
 VRY = [W/2,-W/2,-W/2,W/2,W/2]
 
 
-def check_car_collision(xlist, ylist, yawlist, ox, oy):
+def check_car_collision(xlist, ylist, yawlist, ox, oy, kdtree):
     for x, y, yaw in zip(xlist, ylist, yawlist):
-        if not rectangle_check(x, y, yaw, ox, oy):
+        cx = x + WBUBBLE_DIST*cos(yaw)
+        cy = y + WBUBBLE_DIST*sin(yaw)
+
+        ids = kdtree.search_in_distance([cx, cy], WBUBBLE_R)
+
+        if len(ids) == 0:
+            continue
+        
+        if not rectangle_check(x, y, yaw,
+                [ox[i] for i in ids], [oy[i] for i in ids]):
             return False # collision
     
     return True # no collision
@@ -28,14 +37,15 @@ def rectangle_check(x, y, yaw, ox, oy):
     c, s = cos(-yaw), sin(-yaw)
     for iox, ioy in zip(ox, oy):
         tx = iox - x
-        ty = iox -y
-        tx = c*tx - s*ty
-        ty = s*ty + c*ty
+        ty = ioy - y
+        rx = c*tx - s*ty
+        ry = s*tx + c*ty
 
-        if tx > LF or tx < -LB or ty > W/2.0 or ty < -W/2.0:
-            return True # no collision
+        if not (rx > LF or rx < -LB or ry > W/2.0 or ry < -W/2.0):
+            # print (x, y, yaw, iox, ioy, c, s, rx, ry)
+            return False # no collision
     
-    return False # collision
+    return True # collision
 
 
 def plot_arrow(x, y, yaw, length=1.0, width=0.5, fc="r", ec="k"):
