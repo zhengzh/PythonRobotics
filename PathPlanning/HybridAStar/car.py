@@ -56,7 +56,7 @@ def plot_arrow(x, y, yaw, length=1.0, width=0.5, fc="r", ec="k"):
     else:
         plt.arrow(x, y, length * cos(yaw), length * sin(yaw),
                   fc=fc, ec=ec, head_width=width, head_length=width, alpha=0.4)
-        plt.plot(x, y)
+        # plt.plot(x, y)
 
 def plot_car(x, y, yaw):
     car_color = '-k'
@@ -69,7 +69,7 @@ def plot_car(x, y, yaw):
         car_outline_x.append(tx)
         car_outline_y.append(ty)
     
-    arrow_x, arrow_y, arrow_yaw = c*1.5, s*1.5, yaw
+    arrow_x, arrow_y, arrow_yaw = c*1.5+x, s*1.5+y, yaw
     plot_arrow(arrow_x, arrow_y, arrow_yaw)
     
     plt.plot(car_outline_x, car_outline_y, car_color)

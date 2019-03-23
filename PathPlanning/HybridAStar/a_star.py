@@ -13,12 +13,11 @@ import matplotlib.pyplot as plt
 import math
 import heapq
 
-show_animation = False
-
-
 _round = round
 def round(x):
     return int(_round(x))
+
+show_animation = False
 
 class Node:
 
@@ -238,4 +237,5 @@ def main():
 
 
 if __name__ == '__main__':
+    show_animation = True
     main()

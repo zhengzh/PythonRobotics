@@ -15,7 +15,7 @@ import scipy.spatial
 import matplotlib.pyplot as plt
 import reeds_shepp_path_planning as rs
 import heapq
-from car import move, check_car_collision, MAX_STEER, WB
+from car import move, check_car_collision, MAX_STEER, WB, plot_car
 from a_star import dp_planning, calc_obstacle_map
 
 XY_GRID_RESOLUTION = 2.0 #[m]
@@ -167,9 +167,9 @@ def calc_next_node(current, steer, direction, config, ox, oy, kdtree):
         return None
 
     d = direction==1
-    xind = int(x/XY_GRID_RESOLUTION)
-    yind = int(y/XY_GRID_RESOLUTION)
-    yawind = int(yaw/YAW_GRID_RESOLUTION)
+    xind = round(x/XY_GRID_RESOLUTION)
+    yind = round(y/XY_GRID_RESOLUTION)
+    yawind = round(yaw/YAW_GRID_RESOLUTION)
     
     addedcost = 0.0
 
@@ -232,7 +232,21 @@ def update_node_with_analystic_expantion(current, goal,
 
     if apath:
         plt.plot(apath.x, apath.y)
-        return True, apath
+        fx = apath.x[1:]
+        fy = apath.y[1:]
+        fyaw = apath.yaw[1:]
+
+        fcost = current.cost + calc_rs_path_cost(apath)
+        fpind = calc_index(current, c)
+
+        fd = []
+        for d in apath.directions[1:]:
+            fd.append(d>=0)
+        
+        fsteer = 0.0
+        fpath = Node(current.xind, current.yind, current.yawind, 
+            current.direction, fx, fy, fyaw, fd, cost=fcost, pind=fpind, steer=fsteer)
+        return True, fpath
 
     return False, None
 
@@ -289,9 +303,9 @@ def hybrid_a_star_planning(start, goal, ox, oy, xyreso, yawreso):
 
     config = Config(tox, toy, xyreso, yawreso)
 
-    nstart = Node(int(start[0] / xyreso), int(start[1] / xyreso), int(start[2] / yawreso),
+    nstart = Node(round(start[0] / xyreso), round(start[1] / xyreso), round(start[2] / yawreso),
                   True, [start[0]], [start[1]], [start[2]], [True], cost=0)
-    ngoal = Node(int(goal[0] / xyreso), int(goal[1] / xyreso), int(goal[2] / yawreso),
+    ngoal = Node(round(goal[0] / xyreso), round(goal[1] / xyreso), round(goal[2] / yawreso),
                  True, [goal[0]], [goal[1]], [goal[2]], [True])
 
     openList, closedList = {}, {}
@@ -338,37 +352,37 @@ def hybrid_a_star_planning(start, goal, ox, oy, xyreso, yawreso):
 
     rx, ry, ryaw = [], [], []
 
-    return rx, ry, ryaw
+    path = get_final_path(closedList, fpath, nstart, config)
+    return path
 
 def calc_cost(n, h_dp, goal, c):
     ind = (n.yind - c.miny) * c.xw + (n.xind - c.minx)
     return (n.cost + H_COST*h_dp[ind].cost)
 
 def get_final_path(closed, ngoal, nstart, config):
-    rx, ry, ryaw = reversed(ngoal.x), reversed(ngoal.y), reversed(ngoal.yaw)
-    direction = reversed(ngoal.directions)
+    rx, ry, ryaw = list(reversed(ngoal.xlist)), list(reversed(ngoal.ylist)), list(reversed(ngoal.yawlist))
+    direction = list(reversed(ngoal.directions))
     nid = ngoal.pind
     finalcost = ngoal.cost
 
-    while nid != -1:
+    while nid:
         n = closed[nid]
-        rx.extend(n.xlist)
-        ry.extend(n.ylist)
-        ryaw.extend(n.yawlist)
-        direction.extend(n.yawlist)
+        rx.extend(list(reversed(n.xlist)))
+        ry.extend(list(reversed(n.ylist)))
+        ryaw.extend(list(reversed(n.yawlist)))
+        direction.extend(list(reversed(n.directions)))
        
         nid = n.pind
 
-    rx = reversed(rx)
-    ry = reversed(ry)
-    ryaw = reversed(ryaw)
-    ryaw1 = reversed(ryaw1)
-    direction = reversed(direction)
+    rx = list(reversed(rx))
+    ry = list(reversed(ry))
+    ryaw = list(reversed(ryaw))
+    direction = list(reversed(direction))
 
     # adjuct first direction
     direction[0] = direction[1]
 
-    path = Path(rx, ry, ryaw, ryaw1, direction, finalcost)
+    path = Path(rx, ry, ryaw, direction, finalcost)
 
     return path
 
@@ -421,14 +435,30 @@ def main():
     goal = [50.0, 50.0, np.deg2rad(-90.0)]
 
     plt.plot(ox, oy, ".k")
-    rs.plot_arrow(start[0], start[1], start[2])
+    rs.plot_arrow(start[0], start[1], start[2], fc='g')
     rs.plot_arrow(goal[0], goal[1], goal[2])
 
     plt.grid(True)
     plt.axis("equal")
 
-    rx, ry, ryaw = hybrid_a_star_planning(
+    path = hybrid_a_star_planning(
         start, goal, ox, oy, XY_GRID_RESOLUTION, YAW_GRID_RESOLUTION)
+    
+    # plot_car(*start)
+    # plot_car(*goal)
+    x = path.xlist
+    y = path.ylist
+    yaw = path.yawlist
+    direction = path.directionlist
+
+    for ix, iy, iyaw in zip(x, y, yaw):
+        plt.cla()
+        plt.plot(ox, oy, ".k")
+        plt.plot(x, y, "-r", label="Hybrid A* path")
+        plt.grid(True)
+        plt.axis("equal")
+        plot_car(ix, iy, iyaw)
+        plt.pause(0.0001)
 
     plt.show()
     print(__file__ + " start!!")
