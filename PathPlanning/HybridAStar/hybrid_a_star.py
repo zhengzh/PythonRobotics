@@ -33,7 +33,7 @@ SB_COST = 100.0 # switch back penalty cost
 BACK_COST = 5.0 # backward penalty cost
 STEER_CHANGE_COST = 5.0 # steer angle change penalty cost
 STEER_COST = 1.0 # steer angle change penalty cost
-JACKKNIF_COST= 200.0 # Jackknif cost
+# JACKKNIF_COST= 200.0 # Jackknif cost
 H_COST = 5.0 # Heuristic cost
 
 show_animation = True
