@@ -108,10 +108,10 @@ class KDTree:
 class Config:
 
     def __init__(self, ox, oy, xyreso, yawreso):
-        min_x_m = min(ox) - EXTEND_AREA
-        min_y_m = min(oy) - EXTEND_AREA
-        max_x_m = max(ox) + EXTEND_AREA
-        max_y_m = max(oy) + EXTEND_AREA
+        min_x_m = min(ox) #- EXTEND_AREA
+        min_y_m = min(oy) #- EXTEND_AREA
+        max_x_m = max(ox) #+ EXTEND_AREA
+        max_y_m = max(oy) #+ EXTEND_AREA
 
         ox.append(min_x_m)
         oy.append(min_y_m)
@@ -182,7 +182,7 @@ def calc_next_node(current, steer, direction, config, ox, oy, kdtree):
     # steer change penalty
     addedcost += STEER_CHANGE_COST*abs(current.steer-steer)
 
-    cost = current.cost + addedcost    
+    cost = current.cost + addedcost + arc_l   
 
     node = Node(xind, yind, yawind, d, xlist,
                 ylist, yawlist, [d],
@@ -357,6 +357,8 @@ def hybrid_a_star_planning(start, goal, ox, oy, xyreso, yawreso):
 
 def calc_cost(n, h_dp, goal, c):
     ind = (n.yind - c.miny) * c.xw + (n.xind - c.minx)
+    if not h_dp.has_key(ind):
+        return (n.cost + 999999999) # collision cost
     return (n.cost + H_COST*h_dp[ind].cost)
 
 def get_final_path(closed, ngoal, nstart, config):
