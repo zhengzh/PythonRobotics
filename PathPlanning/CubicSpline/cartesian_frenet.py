@@ -113,7 +113,7 @@ def draw_road(maps_x, maps_y, maps_s):
         py = maps_y[prev_point]
 
         perpend = normal(py-ny, nx-px) # [-y, x]
-        parallel_line.append([perpend[0]+px, perpend[1]+py])
+        parallel_line.append([perpend[0]+px, perpend[1]+py]) # counter clock wise move
         parallel_line.append([perpend[0]+nx, perpend[1]+ny])
 
     return parallel_line
