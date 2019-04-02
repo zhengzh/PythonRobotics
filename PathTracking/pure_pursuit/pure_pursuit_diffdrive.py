@@ -32,8 +32,8 @@ def update(state, w, dt):
 def PIDControl(target, current, dist):
     kv = 0.1
     v = target
-    if dist < 3:
-        v = kv * dist  # speed proportional to distance to goal
+    v = kv * dist  # speed proportional to distance to goal,
+    # smooth speed
     target = copysign(min(abs(target), v), target) # add direction, yes
     a = Kp * (target - current)
 
@@ -65,19 +65,26 @@ def pure_pursuit_control(state, cx, cy, pind, direction=1):
     if direction == 1:
         alpha = math.pi-alpha
 
-    k = 2*sin(alpha)/dist
+    k = 2*sin(alpha)/dist # calculate curvature
 
-    # no drive back, even though it is better sometimes
-    # if state.v < 0:  # back
-    #     alpha = math.pi - alpha
-
-    # when speed is 0, it's possible to drive back
-    # but when driving, don't try to drive back
-
-    w = state.v * k
+    w = state.v * k # calculate rotation speed
 
     return w, ind, k
 
+
+def calc_nearest_index(state, cx, cy):
+    # search nearest point index
+    dx = [state.x - icx for icx in cx]
+    dy = [state.y - icy for icy in cy]
+    d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx, dy)]
+    ind = d.index(min(d))
+
+
+def calc_target_index2(state, cx, cy, pind):
+    # search from previous index
+    pass
+
+    
 
 def calc_target_index(state, cx, cy):
 
@@ -99,59 +106,24 @@ def calc_target_index(state, cx, cy):
 
     return ind
 
-# 
-def predict(cx, cy, target_speed, T = 5.0, dt=0.1):
-    # initial state
-    state = State(x=-0.0, y=-3.0, yaw=0.0, v=0.0)
+def compute_vw(state, cx, cy, target_speed, dist, target_ind, direction=1):
+    ai = PIDControl(target_speed*direction, state.v, dist)
+    wi, target_ind, ki = pure_pursuit_control(state, cx, cy, target_ind, direction)
 
-    lastIndex = len(cx) - 1
-    time = 0.0
-    x = [state.x]
-    y = [state.y]
-    tx,ty=cx[-1],cy[-1]
-
-    yaw = [state.yaw]
-    v = [state.v]
-    t = [0.0]
-    w = [0.0]
-
-    target_ind = calc_target_index(state, cx, cy)
-
+    v = state.v + ai*dt # smooth increase velocity
     
-    dist = math.sqrt((tx-state.x)**2+(ty-state.y)**2)
+    # make sure path curvature is continous, then rotation velocity will
+    # not jump heavily
+    if abs(wi)>45/180.*math.pi: # limit rotation speed
+        wi = 1*direction
+        v = min(v, wi/ki) # decrease velocity when curvature is too big
+        # or keep velocity unchanged, if curvature don't jump, velocity should not jump
+    
+    return v, wi, target_ind, ki
 
-    while T >= time and dist>0.1:
-        dist = math.sqrt((tx-state.x)**2+(ty-state.y)**2)
 
-        ai = PIDControl(target_speed, state.v)
-        wi, target_ind = pure_pursuit_control(state, cx, cy, target_ind)
-
-        state.v = 0.3
-
-        state = update(state, wi, dt)
-
-        time = time + dt
-
-        x.append(state.x)
-        y.append(state.y)
-        yaw.append(state.yaw)
-        v.append(state.v)
-        t.append(time)
-        w.append(wi)
-
-def main():
-    #  target course
-    # cx = np.arange(0, 5., 0.1)
-    cx = np.arange(0, 0.1, 0.1)
-    cy = [math.sin(ix / 5.0) * ix / 2.0 for ix in cx]
-
-    target_speed = 10.0 / 3.6  # [m/s]
-
-    T = 100.0  # max simulation time
-
+def predict(state, cx, cy, target_speed, direction=1, T=200.0, dt=0.1):
     # initial state
-    state = State(x=-0.0, y=-0.3, yaw=0.0, v=0.0)
-
     lastIndex = len(cx) - 1
     time = 0.0
     x = [state.x]
@@ -166,29 +138,14 @@ def main():
 
     target_ind = calc_target_index(state, cx, cy)
 
-    
     dist = math.sqrt((tx-state.x)**2+(ty-state.y)**2)
 
-    direction = -1
     while T >= time and dist>0.1:
         dist = math.sqrt((tx-state.x)**2+(ty-state.y)**2)
 
-        ai = PIDControl(target_speed*direction, state.v, dist)
-        wi, target_ind, ki = pure_pursuit_control(state, cx, cy, target_ind, direction)
+        vi, wi, target_ind, ki = compute_vw(state, cx, cy, target_speed, dist, target_ind, direction )
 
-        # state.v = 0.3
-        print ai
-        
-        state.v += ai*dt # smooth increase velocity
-        
-        # make sure path curvature is continous, then rotation velocity will
-        # not jump heavily
-        if abs(wi)>45/180.*math.pi: # limit rotation speed
-            wi = 1*direction
-            state.v = min(state.v, wi/ki) # decrease velocity when curvature is too big
-            # or keep velocity unchanged
-        
-
+        state.v = vi
         state = update(state, wi, dt)
 
         time = time + dt
@@ -201,7 +158,7 @@ def main():
         w.append(wi)
         k.append(ki)
 
-        if False:
+        if show_animation:
             plt.cla()
             plt.plot(cx, cy, ".r", label="course")
             plt.plot(x, y, "-b", label="trajectory")
@@ -210,6 +167,24 @@ def main():
             plt.grid(True)
             plt.title("Speed[km/h]:" + str(state.v * 3.6)[:4])
             plt.pause(0.001)
+
+
+    return x, y, yaw, v, w, k, t
+
+def main():
+    #  target course
+    # cx = np.arange(0, 5., 0.1)
+    cx = np.arange(0, 0.1, 0.1)
+    cy = [math.sin(ix / 5.0) * ix / 2.0 for ix in cx]
+
+    target_speed = 10.0 / 3.6  # [m/s]
+
+    T = 100.0  # max simulation time
+
+    # initial state
+    state = State(x=-0.0, y=-0.3, yaw=0.0, v=0.0)
+
+    x, y, yaw, v, w, k, t = predict(state, cx, cy, target_speed, T=500.0, dt=0.1)
 
     if show_animation:
         plt.plot(cx, cy, ".r", label="course")
@@ -240,6 +215,6 @@ def main():
         plt.grid(True)
         plt.show()
 
+
 if __name__ == '__main__':
-    main()
-    
+    main()    
