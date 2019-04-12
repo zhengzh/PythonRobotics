@@ -62,7 +62,7 @@ def pure_pursuit_control(state, cx, cy, pind, direction=1):
     dist = sqrt((ty-state.y)**2+(tx-state.x)**2)
 
 
-    if direction == 1:
+    if direction == -1:
         alpha = math.pi-alpha
 
     k = 2*sin(alpha)/dist # calculate curvature
@@ -85,6 +85,9 @@ def calc_target_index2(state, cx, cy, pind):
     pass
 
     
+def test():
+    pass
+    # select a speed
 
 def calc_target_index(state, cx, cy):
 
@@ -158,7 +161,7 @@ def predict(state, cx, cy, target_speed, direction=1, T=200.0, dt=0.1):
         w.append(wi)
         k.append(ki)
 
-        if show_animation:
+        if False:
             plt.cla()
             plt.plot(cx, cy, ".r", label="course")
             plt.plot(x, y, "-b", label="trajectory")
