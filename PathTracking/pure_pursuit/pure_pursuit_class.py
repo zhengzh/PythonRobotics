@@ -1,19 +1,6 @@
 from __future__ import division, print_function
 from math import *
 
-import numpy as np
-import matplotlib.pyplot as plt
-
-
-k_ = 0.1  # look forward gain
-kp_ = 1  # speed propotional gain
-kdist_ = 0.1  # distance gain
-ld_ = 1.
-dt_ = 0.1
-v_max_ = 1.5
-w_max_ = 1.
-acc_max_ = 2.
-
 
 class State:
 
@@ -33,54 +20,6 @@ class State:
         return State(x, y, yaw, v)
 
 
-class PurePursuit(object):
-    
-    def __init__(self, ld=1.0, k=0.1, kp=1, dt=0.1, v_max=1.5, 
-        w_max=1., acc_max=2):
-        
-        self.ld = ld
-        self.k = k
-        self.kp = kp
-        self.dt = dt
-        self.v_max = v_max
-        self.w_max = w_max
-        self.acc_max = acc_max
-
-    def pure_pursuit_control():
-        
-
-
-
-# class Trajectory:
-
-#     def __init__(self):
-
-#         self.xs = []
-#         self.ys = []
-#         self.yaws = []
-#         self.vs = []
-#         self.ts = []
-#         self.ws = []
-#         self.ks = []
-
-#     def append(self, x, y, yaw, v, k, w, t):
-
-#         pass
-
-
-
-
-def pid(current, target_speed, dist_to_end):
-
-    target = min(abs(target_speed), dist_to_end)
-    target = copysign(target, target_speed)
-
-    acc = kp_ * (target - current)
-    acc = max(min(acc, acc_max_), -acc_max_)
-
-    return acc
-
-
 def calculate_kappa(state, tx, ty):
 
     dist = sqrt((ty - state.y)**2 + (tx - state.x)**2)
@@ -90,61 +29,76 @@ def calculate_kappa(state, tx, ty):
     return k
 
 
-def calculate_vw(v, acc, kappa, dt):
-
-    v = v + acc * dt
-
-    if kappa > 1e-5:
-        w = v * kappa
-        w = max(min(w, w_max_), -w_max_)
-        v = w / kappa
-    else:
-        w = 0.
-
-    return v, w
-
-
-def calculate_target_index(state, cx, cy, prev_index):
-
-    N = len(cx)
-    index = prev_index
-
-    look_ahead_dist = ld_ + k_ * state.v
-    while index < N - 1:
-
-        dx = cx[index] - state.x
-        dy = cy[index] - state.y
-        dist = sqrt(dx**2 + dy**2)
-
-        if dist > look_ahead_dist: break
-
-        index += 1
-
-    return index
-
-
-def calculate_nearest_index(state, cx, cy):
-    # search nearest point index
-    dx = [state.x - icx for icx in cx]
-    dy = [state.y - icy for icy in cy]
-    d = [abs(math.sqrt(idx**2 + idy**2)) for (idx, idy) in zip(dx, dy)]
-    ind = d.index(min(d))
-
-    return ind
-
-
 def distance(x1, y1, x2, y2):
 
     return sqrt((x1 - x2)**2 + (y1 - y2)**2)
 
 
-def pure_pursuit(state, cx, cy, prev_ind, target_speed, dt):
+class PurePursuit(object):
 
-    dist_to_end = distance(cx[-1], cy[-1], state.x, state.y)
-    target_index = calculate_target_index(state, cx, cy, prev_ind)
+    def __init__(self):
 
-    kappa = calculate_kappa(state, cx[target_index], cy[target_index])
-    acc = pid(state.v, target_speed, dist_to_end)
-    v, w = calculate_vw(state.v, acc, kappa, dt)
+        self.ld = 1.0
+        self.k = 0.1  # look forward gain
+        self.kp = 1.  # speed propotional gain
+        self.k_dist = 1.  # distance gain
+        self.dt = 0.1
+        self.v_max = 1.5
+        self.w_max = 1.
+        self.acc_max = 2.
 
-    return v, w, kappa, target_index
+    def set_path(self, cx, cy):
+
+        self.index = 0
+        self.cx, self.cy = cx, cy
+
+    def pid(self, current, target_speed, dist_to_end):
+
+        target = min(abs(target_speed), self.k_dist * dist_to_end)
+        target = copysign(target, target_speed)
+
+        acc = self.kp * (target - current)
+        acc = max(min(acc, self.acc_max), -self.acc_max)
+
+        return acc
+
+    def calculate_vw(self, v, acc, kappa):
+
+        v = v + acc * self.dt
+
+        if kappa > 1e-5:
+            w = v * kappa
+            w = max(min(w, self.w_max), -self.w_max)
+            v = w / kappa
+        else:
+            w = 0.
+
+        return v, w
+
+    def calculate_target_index(self, state):
+
+        index = self.index
+
+        look_ahead_dist = self.ld + self.k * state.v
+        while index < len(self.cx) - 1:
+
+            dx = self.cx[index] - state.x
+            dy = self.cy[index] - state.y
+            dist = sqrt(dx**2 + dy**2)
+            if dist > look_ahead_dist: break
+
+            index += 1
+
+        return index
+
+    def pure_pursuit(self, state, target_speed):
+
+        dist_to_end = distance(self.cx[-1], self.cy[-1], state.x, state.y)
+        self.index = self.calculate_target_index(state)
+
+        kappa = calculate_kappa(state, self.cx[self.index],
+                                self.cy[self.index])
+        acc = self.pid(state.v, target_speed, dist_to_end)
+        v, w = self.calculate_vw(state.v, acc, kappa)
+
+        return v, w, kappa

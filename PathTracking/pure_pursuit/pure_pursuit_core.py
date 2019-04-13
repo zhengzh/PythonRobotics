@@ -1,8 +1,6 @@
 from __future__ import division, print_function
 from math import *
 
-import numpy as np
-import matplotlib.pyplot as plt
 
 k_ = 0.1  # look forward gain
 kp_ = 1  # speed propotional gain
@@ -11,6 +9,17 @@ ld_ = 1.
 v_max_ = 1.5
 w_max_ = 1.
 acc_max_ = 2.
+
+index_ = 0
+cx_, cy_ = [], []
+
+
+def set_path(cx, cy):
+    
+    global cx_, cy_, index_
+    cx_ = cx
+    cy_ = cy
+    index_ = 0
 
 
 class State:
@@ -84,27 +93,18 @@ def calculate_target_index(state, cx, cy, prev_index):
     return index
 
 
-def calculate_nearest_index(state, cx, cy):
-    # search nearest point index
-    dx = [state.x - icx for icx in cx]
-    dy = [state.y - icy for icy in cy]
-    d = [abs(math.sqrt(idx**2 + idy**2)) for (idx, idy) in zip(dx, dy)]
-    ind = d.index(min(d))
-
-    return ind
-
-
 def distance(x1, y1, x2, y2):
 
     return sqrt((x1 - x2)**2 + (y1 - y2)**2)
 
 
-def pure_pursuit(state, cx, cy, prev_ind, target_speed, dt):
+def pure_pursuit(state, target_speed, dt):
 
-    dist_to_end = distance(cx[-1], cy[-1], state.x, state.y)
-    target_index = calculate_target_index(state, cx, cy, prev_ind)
+    global index_ 
+    dist_to_end = distance(cx_[-1], cy_[-1], state.x, state.y)
+    index_ = calculate_target_index(state, cx_, cy_, index_)
 
-    kappa = calculate_kappa(state, cx[target_index], cy[target_index])
+    kappa = calculate_kappa(state, cx_[target_index], cy_[target_index])
     acc = pid(state.v, target_speed, dist_to_end)
     v, w = calculate_vw(state.v, acc, kappa, dt)
 

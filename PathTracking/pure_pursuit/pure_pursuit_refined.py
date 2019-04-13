@@ -1,8 +1,7 @@
 from __future__ import division, print_function
 from math import *
 
-import numpy as np
-import matplotlib.pyplot as plt
+
 
 
 k_ = 0.1  # look forward gain
