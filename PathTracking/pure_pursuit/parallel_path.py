@@ -7,6 +7,7 @@ from math import pi, sqrt, acos, atan2
 import numpy as np
 import matplotlib.pyplot as plt
 import bisect
+from vec import Vector
 
 # asin (-pi/2, pi/2)
 # acos (0, pi)
@@ -101,6 +102,41 @@ def get_next_waypoint(x, y, theta, maps_x, maps_y):
     return closest_idx
 
 
+def cartesian_to_frenet_vec(x, y, theta, maps_x, maps_y, maps_s):
+    next_point = get_next_waypoint(x, y, theta, maps_x, maps_y)
+    if not next_point: next_point += 1
+
+    prev_point = next_point - 1
+
+    nx = maps_x[next_point]
+    ny = maps_y[next_point]
+    px = maps_x[prev_point]
+    py = maps_y[prev_point]
+
+    vn = Vector(nx, ny)
+    vp = Vector(px, py)
+    v = vn - vp
+
+    vx = Vector(x, y)
+
+    tan = v.normalize()
+    perpend = tan.perpendicular()
+
+    vpx = vx - vp
+
+    proj = vpx.project_onto(v)
+
+    d = vpx - proj
+
+    d = d * perpend
+
+    s = proj * tan
+
+    s += maps_s[prev_point]  # s < 0  fall off path
+
+    return s, d
+
+
 def cartesian_to_frenet(x, y, theta, maps_x, maps_y, maps_s):
 
     next_point = get_next_waypoint(x, y, theta, maps_x, maps_y)
@@ -118,7 +154,7 @@ def cartesian_to_frenet(x, y, theta, maps_x, maps_y, maps_s):
 
     proj_x, proj_y = proj(x - px, y - py, nx - px, ny - py)
 
-    d_x, d_y = x - proj_x, y - proj_y
+    d_x, d_y = x - px - proj_x, y - py - proj_y
 
     d = d_x * perpen_x + d_y * perpen_y
 
@@ -152,9 +188,39 @@ def resample(maps_x, maps_y, step=0.5):
     return sample_x, sample_y
 
 
+def frenet_to_cartesian_vec(s, d, maps_x, maps_y, maps_s):
+    s = min(s, maps_s[-1] - 0.01)  # guard don't go too far
+
+    next_point = bisect.bisect(maps_s, s)
+
+    if not next_point: next_point += 1
+    prev_point = next_point - 1
+
+    nx = maps_x[next_point]
+    ny = maps_y[next_point]
+    px = maps_x[prev_point]
+    py = maps_y[prev_point]
+
+    vn = Vector(nx, ny)
+    vp = Vector(px, py)
+    v = vn - vp
+
+    tan = v.normalize()
+    n = tan.perpendicular()
+
+    ds = s - maps_s[prev_point]
+    nd = d * n
+    tan_s = ds * tan
+
+    res_pos = tan_s + nd
+    cart = res_pos + vp
+
+    return list(cart)
+
+
 def frenet_to_cartesian(s, d, maps_x, maps_y, maps_s):
 
-    s = min(s, maps_s[-1] - 0.01) # guard don't go too far
+    s = min(s, maps_s[-1] - 0.01)  # guard don't go too far
 
     next_point = bisect.bisect(maps_s, s)
 
@@ -190,7 +256,7 @@ def parallel_path(s, d, length, maps_x, maps_y, maps_s):
     paths = []
     for di in np.arange(-1.0, 1.0, 0.2):
         path = [[x, y]]
-        for si in np.arange(s+1.0, 8.0, 0.1):
+        for si in np.arange(s + 1.0, 8.0, 0.1):
             px, py = frenet_to_cartesian(s + si, di, maps_x, maps_y, maps_s)
             path.append([px, py])
         paths.append(path)
@@ -221,7 +287,7 @@ def main():
     plt.scatter(samples_x, samples_y)
     maps_s = get_maps(maps_x, maps_y)
 
-    s, d = cartesian_to_frenet(-1, -1, 0., maps_x, maps_y, maps_s)
+    s, d = cartesian_to_frenet_vec(-1, -1, 0., maps_x, maps_y, maps_s)
     print(s, d)
     maps_s = get_maps(samples_x, samples_y)
     paths = parallel_path(-0., 0., 4.0, samples_x, samples_y, maps_s)

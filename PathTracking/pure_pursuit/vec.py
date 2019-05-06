@@ -16,7 +16,7 @@ class Vector:
         return sqrt(self.x**2 + self.y**2)
 
     def normalize(self):
-        pass
+        return self * (1. / self.norm)
 
     def project_onto(self, w):
         n = self.dot(w) / self.dot(self)
@@ -70,9 +70,10 @@ def main():
     print(w - v)
     print(Vector(3, 4).norm)
     print(w.angle(v))
-    print(v*w==v.dot(w))
+    print(v * w == v.dot(w))
     print(w.project_onto(v))
     print(w.perpendicular())
+    print(v.normalize())
 
 
 if __name__ == '__main__':
