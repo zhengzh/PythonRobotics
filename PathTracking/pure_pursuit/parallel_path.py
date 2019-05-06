@@ -1,3 +1,4 @@
+# /usr/bin/python
 # as simple as possible
 
 # path, parallel, which path is longest, select that one
@@ -27,7 +28,7 @@ def normal(x, y):
 
 
 def proj(x, y, u, v):
-    n = (x * u + y * v) / (u * u + v * v)
+    n = float(x * u + y * v) / (u * u + v * v)
     return (n * u, n * v)
 
 
@@ -95,16 +96,15 @@ def get_next_waypoint(x, y, theta, maps_x, maps_y):
 
     # TODO both closest and next point are behind the car
     if (angle > pi / 4):
-        closest_waypoint += 1
+        closest_idx += 1
 
-    return closest_waypoint
+    return closest_idx
 
 
 def cartesian_to_frenet(x, y, theta, maps_x, maps_y, maps_s):
 
     next_point = get_next_waypoint(x, y, theta, maps_x, maps_y)
-    if next_point == 0:
-        print "error"
+    if not next_point: next_point += 1
 
     prev_point = next_point - 1
 
@@ -113,11 +113,18 @@ def cartesian_to_frenet(x, y, theta, maps_x, maps_y, maps_s):
     px = maps_x[prev_point]
     py = maps_y[prev_point]
 
+    tan_x, tan_y = normal(nx - px, ny - py)
+    perpen_x, perpen_y = -tan_y, tan_x
+
     proj_x, proj_y = proj(x - px, y - py, nx - px, ny - py)
 
-    d = [x - proj_x, y - proj_y]
+    d_x, d_y = x - proj_x, y - proj_y
 
-    s = maps_s[prev_point] + norm(proj_x, proj_y)
+    d = d_x * perpen_x + d_y * perpen_y
+
+    s = proj_x * tan_x + proj_y * tan_y
+
+    s += maps_s[prev_point]  # s < 0  fall off path
 
     return s, d
 
@@ -147,7 +154,7 @@ def resample(maps_x, maps_y, step=0.5):
 
 def frenet_to_cartesian(s, d, maps_x, maps_y, maps_s):
 
-    s = min(s, maps_s[-1] - 0.01)
+    s = min(s, maps_s[-1] - 0.01) # guard don't go too far
 
     next_point = bisect.bisect(maps_s, s)
 
@@ -183,7 +190,7 @@ def parallel_path(s, d, length, maps_x, maps_y, maps_s):
     paths = []
     for di in np.arange(-1.0, 1.0, 0.2):
         path = [[x, y]]
-        for si in np.arange(1.0, 8.0, 0.5):
+        for si in np.arange(s+1.0, 8.0, 0.1):
             px, py = frenet_to_cartesian(s + si, di, maps_x, maps_y, maps_s)
             path.append([px, py])
         paths.append(path)
@@ -212,7 +219,10 @@ def main():
     plt.plot(maps_x, maps_y, 'r')
     # import ipdb; ipdb.set_trace()
     plt.scatter(samples_x, samples_y)
-    # maps_s = get_maps(maps_x, maps_y)
+    maps_s = get_maps(maps_x, maps_y)
+
+    s, d = cartesian_to_frenet(-1, -1, 0., maps_x, maps_y, maps_s)
+    print(s, d)
     maps_s = get_maps(samples_x, samples_y)
     paths = parallel_path(-0., 0., 4.0, samples_x, samples_y, maps_s)
     # paths = parallel_path(0., 0., 4.0, maps_x, maps_y, maps_s)
