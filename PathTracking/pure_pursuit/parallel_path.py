@@ -14,6 +14,11 @@ from vec import Vector
 # atan (-pi/2, pi/2)
 # atan2 (-pi, pi)
 
+# vector parallel, direction, start point
+# resample len/2, len/3
+# path means an array of head-tail connected points
+# parallel way means an array of parallel line segments
+
 
 def pi_2_pi(x):
     if x > pi:
@@ -188,7 +193,33 @@ def resample(maps_x, maps_y, step=0.5):
     return sample_x, sample_y
 
 
-def frenet_to_cartesian_vec(s, d, maps_x, maps_y, maps_s):
+def frenet_to_cartesian2(s, d, way, way_s_sum):
+    s = min(s, was_sum[-1] - 0.01)  # guard don't go too far
+
+    next_point = bisect.bisect(was_sum, s)
+    if not next_point:
+        next_point += 1
+
+    prev_point = next_point - 1
+    px, py = way[prev_point]
+    nx, ny = way[next_point]
+
+    vn = Vector(nx, ny)
+    vp = Vector(px, py)
+    v = vn - vp
+
+    ds = s - maps_s[prev_point]
+    tan_s = ds * tan
+    tan = v.normalize()
+
+    n = tan.perpendicular()
+    nd = d * n
+
+    res_pos = tan_s + nd
+    cart = res_pos + vp
+
+
+def frenet_to_cartesian_vec(s, d, maps_x, maps_y, was_sum):
     s = min(s, maps_s[-1] - 0.01)  # guard don't go too far
 
     next_point = bisect.bisect(maps_s, s)
