@@ -327,7 +327,7 @@ def main():
     # plt.plot(pa_x, pa_y, 'b')
     for p in paths:
         plt.plot(*zip(*p))
-        plt.scatter(*zip(*p))
+        # plt.scatter(*zip(*p))
     plt.axis('square')
     plt.show()
 

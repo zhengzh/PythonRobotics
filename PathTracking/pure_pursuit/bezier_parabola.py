@@ -1,6 +1,8 @@
 
 
 import numpy as np
+import matplotlib.pyplot as plt
+
 def parabola(a, b, c, t):
     a,b,c = map(np.array, [a, b, c])
     q=(1-t)*a+t*b
@@ -13,8 +15,14 @@ if __name__ == '__main__':
     # b=(0,0)
     # c=(8,0)
     # t=0.75
-    a=(-5,10)
+    a=(0,10)
     b=(0,0)
     c=(10,5)
-    t=0.8
-    print parabola(a, b, c, t)
+    
+    points = []
+    for t in np.arange(0,1.0,0.01):
+        points.append(parabola(a, b, c, t).tolist())
+
+    plt.plot(*zip(a, b, c))
+    plt.plot(*zip(*points))
+    plt.show()
